@@ -68,16 +68,19 @@
 
 
 ## 3. Game Behavior & Server Concurrency Architecture (Sprint 2 Deliverable)
-
 ### 3.1 Server Concurrency Strategy
-- **Architecture Choice:** [Multi-Threading (`threading.Thread`) OR Non-blocking I/O multiplexing (`select.select` / `selectors`)]
-- **Synchronization Logic:** Explain how shared game state and client list are thread-safe (e.g. `threading.Lock`) to prevent race conditions during turn processing.
+- **Architecture Choice:** Multi-Threading (`threading.Thread`). The main thread
+  accepts connections and spawns one worker thread per client socket.
+- **Synchronization Logic:** 
+  a global threading lock, locks the board, turn and score, this lock is held so two threads cant process moces at the same time
 
 ### 3.2 State & Score Synchronization Across Clients
-- **Turn Enforcement:** Detail how the server validates active player ID before processing moves and broadcasts updated turn notifications to all clients.
-- **Score & Board Synchronization:** Describe how state broadcasts keep client screens synchronized in real time.
-
----
+- **Turn Enforcement:** On every MOVE the server checks player_num equals the
+  current_turn inside the lock before changing the board. If it doesn't match,
+  the board is unchanged and the sender gets an error. On a valid move the
+  server flips current_turn and includes it in the STATE_UPDATE sent to both.
+- **Score & Board Synchronization:** 
+  The server makes a message from the current state of the board and sends it to every client. When clients get the updated message they accept the updated board and score.
 
 ## 4. Coding & AI Implementation Plan (Sprint 3)
 
